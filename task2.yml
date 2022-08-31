@@ -1,0 +1,47 @@
+version: "3.7"
+
+services:
+  vote:
+    image: vote
+    ports:
+      - "80"
+    networks:
+      - frontend
+      - backend
+
+  db:
+    image: postgres:9.4
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  redis:
+    image: redis:5.0-alpine3.10
+    networks:
+      - backend
+      - frontend
+
+  worker:
+    image: worker
+    networks:
+      - frontend
+      - backend
+  
+  result:
+    image: result
+    ports:
+      - "8080:80"
+    networks:
+      - frontend
+      - backend
+
+networks:
+  frontend:
+  backend:
+
+volumes:
+  db-data:
