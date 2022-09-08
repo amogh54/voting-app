@@ -1,0 +1,13 @@
+upstream demo {
+    server vote;
+#    server voting-app_vote_2;
+#    server voting-app_vote_3;
+}
+
+server {
+	listen 80;
+	listen [::]:80;
+        location / {
+            proxy_pass http://demo;
+        }
+    }

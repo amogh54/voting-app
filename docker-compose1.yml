@@ -4,16 +4,20 @@ version: "3.7"
 services:
   vote:
     image: vote
-    container_name: vote
     ports:
       - "80"
     networks:
       - frontend
-      - backend
+    deploy:   
+      replicas: 2
+      update_config:
+        parallelism: 2
+        delay: 15s
+      restart_policy:
+        condition: on-failure
 
   db:
     image: postgres:9.4
-    container_name: db
     environment:
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "postgres"
@@ -21,28 +25,47 @@ services:
       - db-data:/var/lib/postgresql/data
     networks:
       - backend
+    deploy:
+      placement:
+        constraints: [node.role == manager]
 
   redis:
     image: redis:5.0-alpine3.10
-    container_name: redis
     networks:
-      - backend
       - frontend
+    deploy:   
+      replicas: 2
+      update_config:
+        parallelism: 2
+        delay: 15s
+      restart_policy:
+        condition: on-failure
 
   worker:
     image: worker
-    container_name: worker
     networks:
       - frontend
       - backend
+    depends_on:
+      - db
+      - redis
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels: [APP=VOTING]
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+      placement:
+        constraints: [node.role == manager]
 
   result:
     image: result
-    container_name: result
     ports:
       - "8080:80"
     networks:
-      - frontend
       - backend
 
 networks:
